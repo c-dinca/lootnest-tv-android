@@ -11,8 +11,12 @@ android {
         minSdk 21
         targetSdk 36
 
-        versionName "12.2"
-        versionCode = 315
+        // VERSION at the top of the repository is the app's version; the
+        // release workflow publishes v<VERSION> when it changes.
+        def lootnestVersion = rootProject.file("VERSION").text.trim()
+        def (major, minor, patch) = lootnestVersion.tokenize(".").collect { it as int }
+        versionName lootnestVersion
+        versionCode = major * 10000 + minor * 100 + patch
 
         // Generate native debug symbols to allow Google Play to symbolicate our native crashes
         ndk.debugSymbolLevel = 'FULL'
@@ -49,7 +53,7 @@ android {
                 }
             }
 
-            applicationId "com.limelight"
+            applicationId "com.lootnest.tv"
             dimension "root"
             buildConfigField "boolean", "ROOT_BUILD", "false"
         }
@@ -81,10 +85,24 @@ android {
         }
     }
 
+    // Releases are signed with Lootnest for TV's key, kept as CI secrets
+    // (see the README). Without them a release build is left unsigned.
+    signingConfigs {
+        lootnest {
+            def ks = System.getenv("LOOTNEST_KEYSTORE")
+            if (ks != null && new File(ks).exists()) {
+                storeFile file(ks)
+                storePassword System.getenv("LOOTNEST_KEYSTORE_PASSWORD")
+                keyAlias System.getenv("LOOTNEST_KEY_ALIAS")
+                keyPassword System.getenv("LOOTNEST_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         debug {
             applicationIdSuffix ".debug"
-            resValue "string", "app_label", "Moonlight (Debug)"
+            resValue "string", "app_label", "Lootnest (Debug)"
             resValue "string", "app_label_root", "Moonlight (Root Debug)"
         }
         release {
@@ -118,8 +136,12 @@ android {
             // is to please change the applicationId before you publish.
             //
             // TL;DR: Leave the following line alone!
-            applicationIdSuffix ".unofficial"
-            resValue "string", "app_label", "Moonlight"
+            // Lootnest for TV has its own application id (com.lootnest.tv),
+            // so no suffix is needed here.
+            resValue "string", "app_label", "Lootnest"
+            if (System.getenv("LOOTNEST_KEYSTORE") != null) {
+                signingConfig signingConfigs.lootnest
+            }
             resValue "string", "app_label_root", "Moonlight (Root)"
 
             minifyEnabled true

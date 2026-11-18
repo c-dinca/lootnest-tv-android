@@ -1,0 +1,34 @@
+name: Build
+
+on:
+  push:
+    tags-ignore: [ 'v*.*.*' ]
+    branches: [ '**' ]
+  pull_request:
+    branches: [ '**' ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Android NDK
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;29.0.14206865" "platforms;android-37.0" > /dev/null
+      - name: Build
+        run: ./gradlew --no-daemon assembleNonRootDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lootnest-tv-debug
+          path: app/build/outputs/apk/nonRoot/debug/*.apk

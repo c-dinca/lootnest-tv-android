@@ -164,6 +164,19 @@ public class AndroidAudioRenderer implements AudioRenderer {
 
                 // Successfully created working AudioTrack. We're done here.
                 LimeLog.info("Audio track configuration: "+bufferSize+" "+lowLatency);
+                // Lootnest: what the TV granted, for a report (Lootnest on
+                // the PC reads the LootnestTV lines back over ADB).
+                StringBuilder said = new StringBuilder("Sound: ")
+                        .append(sampleRate).append(" Hz (the TV plays ")
+                        .append(AudioTrack.getNativeOutputSampleRate(AudioManager.STREAM_MUSIC)).append(" Hz), asked ")
+                        .append(lowLatency ? "low latency" : "standard").append(" with ")
+                        .append(bufferSize * 1000 / (audioConfiguration.channelCount * 2 * sampleRate)).append(" ms");
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    said.append(", got ")
+                            .append(track.getPerformanceMode() == AudioTrack.PERFORMANCE_MODE_LOW_LATENCY ? "low latency" : "standard")
+                            .append(" with ").append(track.getBufferSizeInFrames() * 1000 / sampleRate).append(" ms");
+                }
+                android.util.Log.i("LootnestTV", said.toString());
                 break;
             } catch (Exception e) {
                 // Try to release the AudioTrack if we got far enough

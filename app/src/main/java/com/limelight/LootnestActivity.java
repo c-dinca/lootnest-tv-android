@@ -19,7 +19,6 @@ import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
@@ -372,60 +371,97 @@ public class LootnestActivity extends Activity {
         return t;
     }
 
+    // The screen in three bands, so nothing can sit over anything else: the
+    // gem and the name with the PC at the top, what's happening and the keys
+    // in the middle, and a foot with the hint and the version.
     private View build() {
-        FrameLayout frame = new FrameLayout(this);
-        GradientDrawable bg = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, new int[]{C_RAISED, C_GROUND});
-        frame.setBackground(bg);
+        LinearLayout root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, new int[]{C_RAISED, C_GROUND}));
+        root.setPadding(dp(48), dp(28), dp(48), dp(24));
+
+        LinearLayout head = new LinearLayout(this);
+        head.setOrientation(LinearLayout.HORIZONTAL);
+        head.setGravity(Gravity.CENTER_VERTICAL);
+        ImageView gem = new ImageView(this);
+        gem.setImageResource(R.drawable.lootnest_gem);
+        head.addView(gem, new LinearLayout.LayoutParams(dp(40), dp(40)));
+        TextView name = text(title, 24, C_TEXT);
+        name.setText(APP_NAME);
+        name.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
+        LinearLayout.LayoutParams nl = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        nl.setMarginStart(dp(12));
+        head.addView(name, nl);
+        pcLine = text(body, 16, C_TEXT_2);
+        pcLine.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
+        head.addView(pcLine);
+        root.addView(head, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
         LinearLayout col = new LinearLayout(this);
         col.setOrientation(LinearLayout.VERTICAL);
         col.setGravity(Gravity.CENTER);
-        frame.addView(col, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-
-        ImageView gem = new ImageView(this);
-        gem.setImageResource(R.drawable.lootnest_gem);
-        col.addView(gem, new LinearLayout.LayoutParams(dp(72), dp(72)));
-
-        TextView name = text(title, 40, C_TEXT);
-        name.setText(APP_NAME);
-        col.addView(name);
-
-        pcLine = text(body, 16, C_TEXT_2);
-        col.addView(pcLine);
+        root.addView(col, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
 
         spinner = new ProgressBar(this);
         spinner.setIndeterminateTintList(ColorStateList.valueOf(C_TEXT));
-        LinearLayout.LayoutParams sl = new LinearLayout.LayoutParams(dp(32), dp(32));
-        sl.topMargin = dp(24);
-        col.addView(spinner, sl);
+        col.addView(spinner, new LinearLayout.LayoutParams(dp(32), dp(32)));
 
-        status = text(bold, 20, C_TEXT);
+        status = text(title, 26, C_TEXT);
         LinearLayout.LayoutParams stl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         stl.topMargin = dp(12);
         col.addView(status, stl);
 
         detail = text(body, 15, C_TEXT_3);
-        detail.setMaxWidth(dp(520));
-        col.addView(detail);
+        detail.setMaxWidth(dp(560));
+        LinearLayout.LayoutParams dl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        dl.topMargin = dp(6);
+        col.addView(detail, dl);
 
         keys = new LinearLayout(this);
         keys.setOrientation(LinearLayout.HORIZONTAL);
+        // Room for the focused key's growth.
+        keys.setPadding(dp(8), dp(8), dp(8), dp(8));
+        keys.setClipToPadding(false);
         LinearLayout.LayoutParams kl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        kl.topMargin = dp(24);
+        kl.topMargin = dp(20);
         col.addView(keys, kl);
 
+        LinearLayout foot = new LinearLayout(this);
+        foot.setOrientation(LinearLayout.HORIZONTAL);
+        foot.setGravity(Gravity.BOTTOM);
+        View left = new View(this);
+        foot.addView(left, new LinearLayout.LayoutParams(0, 1, 1f));
         TextView hint = text(body, 13, C_TEXT_3);
         hint.setText("To come back here while you play, press Start, Select, LB and RB together.");
-        FrameLayout.LayoutParams hl = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
-        hl.bottomMargin = dp(24);
-        frame.addView(hint, hl);
-
+        foot.addView(hint, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 2f));
         TextView version = text(body, 12, C_TEXT_3);
         version.setText(BuildConfig.VERSION_NAME);
-        FrameLayout.LayoutParams vl = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM | Gravity.END);
-        vl.setMargins(0, 0, dp(24), dp(24));
-        frame.addView(version, vl);
-        return frame;
+        version.setGravity(Gravity.END | Gravity.BOTTOM);
+        foot.addView(version, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        root.addView(foot, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        return root;
+    }
+
+    // The keys in a row: left and right stop at the ends, and up and down
+    // stay on the key (there's nothing else to choose), so the focus can't
+    // leave them.
+    private void row(Button focus) {
+        int n = keys.getChildCount();
+        for (int i = 0; i < n; i++) {
+            View k = keys.getChildAt(i);
+            k.setId(View.generateViewId());
+        }
+        for (int i = 0; i < n; i++) {
+            View k = keys.getChildAt(i);
+            k.setNextFocusLeftId(keys.getChildAt(Math.max(0, i - 1)).getId());
+            k.setNextFocusRightId(keys.getChildAt(Math.min(n - 1, i + 1)).getId());
+            k.setNextFocusUpId(k.getId());
+            k.setNextFocusDownId(k.getId());
+        }
+        View f = focus != null ? focus : n > 0 ? keys.getChildAt(0) : null;
+        if (f != null) {
+            f.requestFocus();
+        }
     }
 
     private Button key(String label, boolean main, View.OnClickListener on) {
@@ -476,6 +512,7 @@ public class LootnestActivity extends Activity {
             detail.setText(more != null ? more : "");
             keys.removeAllViews();
             keys.addView(key("Cancel", false, v -> finish()));
+            row(null);
         });
     }
 
@@ -496,7 +533,7 @@ public class LootnestActivity extends Activity {
             keys.addView(key("Settings", false, v -> startActivity(new Intent(this, StreamSettings.class))));
             keys.addView(key("PCs", false, v -> startActivity(new Intent(this, PcView.class))));
             keys.addView(key("Quit", false, v -> finish()));
-            retry.requestFocus();
+            row(retry);
         });
     }
 
@@ -521,7 +558,7 @@ public class LootnestActivity extends Activity {
             keys.addView(key("Settings", play == null, v -> startActivity(new Intent(this, StreamSettings.class))));
             keys.addView(key("PCs", false, v -> startActivity(new Intent(this, PcView.class))));
             keys.addView(key("Quit", false, v -> finish()));
-            (play != null ? play : keys.getChildAt(0)).requestFocus();
+            row(play);
         });
     }
 }

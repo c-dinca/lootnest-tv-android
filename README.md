@@ -1,35 +1,50 @@
-# Moonlight Android
+# Lootnest for TV (Android TV, Google TV, Fire TV)
 
-[![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/232a8tadrrn8jv0k/branch/master?svg=true)](https://ci.appveyor.com/project/cgutman/moonlight-android/branch/master)
-[![Translation Status](https://hosted.weblate.org/widgets/moonlight/-/moonlight-android/svg-badge.svg)](https://hosted.weblate.org/projects/moonlight/moonlight-android/)
+The TV app of [Lootnest](https://github.com/c-dinca/lootnest), the Windows
+game manager with profiles: it plays the games on your PC on a TV, with a
+controller, inside Lootnest's TV mode.
 
-[Moonlight for Android](https://moonlight-stream.org) is an open source client for NVIDIA GameStream and [Sunshine](https://github.com/LizardByte/Sunshine).
+Lootnest on the PC installs this app itself: Settings, TV, **Add an Android
+TV**. Turn on network debugging in the TV's Developer options first (on a
+Fire TV, ADB debugging); when Lootnest connects, the TV asks once to allow
+the computer. Lootnest then installs the app, opens it with the PC's
+address and a pairing PIN, and hands the same PIN to its streaming engine,
+so nothing is typed on the TV.
 
-Moonlight for Android will allow you to stream your full collection of games from your Windows PC to your Android device,
-whether in your own home or over the internet.
+It is a fork of [Moonlight for Android](https://github.com/moonlight-stream/moonlight-android)
+(GPL v3), whose README is [README.moonlight.md](README.moonlight.md). What
+this fork changes:
 
-Moonlight also has a [PC client](https://github.com/moonlight-stream/moonlight-qt) and [iOS/tvOS client](https://github.com/moonlight-stream/moonlight-ios).
+- its own application id, `com.lootnest.tv`, and name, icons and TV banner
+  in Lootnest's look (`app/build.gradle`, `app/src/main/res`);
+- its own first screen, `LootnestActivity`, which the TV's launcher opens:
+  it adds the PC from the `host` it's given, pairs with `pairPin`, opens the
+  host app named Lootnest, wakes a sleeping PC, and waits with Play,
+  Settings, PCs and Quit after a stream. Moonlight's PC list is still there
+  under PCs. Every step is logged with the tag `LootnestTV`, which Lootnest
+  reads back over ADB when something goes wrong;
+- the fonts Tilt Warp and Atkinson Hyperlegible Next (SIL OFL,
+  `app/src/main/assets/fonts/OFL.txt`).
 
-You can follow development on our [Discord server](https://moonlight-stream.org/discord) and help translate Moonlight into your language on [Weblate](https://hosted.weblate.org/projects/moonlight/moonlight-android/).
+To come back to Lootnest for TV's screen during a stream, press Start,
+Select, LB and RB together, as in Moonlight.
 
-## Downloads
-* [Google Play Store](https://play.google.com/store/apps/details?id=com.limelight)
-* [Amazon App Store](https://www.amazon.com/gp/product/B00JK4MFN2)
-* [F-Droid](https://f-droid.org/packages/com.limelight)
-* [APK](https://github.com/moonlight-stream/moonlight-android/releases)
+## Releases
 
-## Building
-* Install Android Studio and the Android NDK
-* Run ‘git submodule update --init --recursive’ from within moonlight-android/
-* In moonlight-android/, create a file called ‘local.properties’. Add an ‘ndk.dir=’ property to the local.properties file and set it equal to your NDK directory.
-* Build the APK using Android Studio or gradle
+`VERSION` is the app's version. A push to master that changes it makes the
+release `v<VERSION>` with the signed `com.lootnest.tv_<VERSION>.apk` and its
+SHA-256 (`.github/workflows/release.yml`); Lootnest pins that address and
+checksum in `core.AndroidAppPinned` once the release has been tried.
 
-## Authors
+Releases are signed with one key, kept as two repository secrets:
+`LOOTNEST_KEYSTORE_B64` (the keystore file, base64; the key's alias is
+`lootnest`) and `LOOTNEST_KEYSTORE_PASSWORD` (the keystore's and the key's).
+Keep a copy of the keystore somewhere safe: a TV only takes an update
+signed with the same key.
 
-* [Cameron Gutman](https://github.com/cgutman)  
-* [Diego Waxemberg](https://github.com/dwaxemberg)  
-* [Aaron Neyer](https://github.com/Aaronneyer)  
-* [Andrew Hennessy](https://github.com/yetanothername)
+To build here: `./gradlew assembleNonRootDebug` (Android SDK with platform
+37 and NDK 29.0.14206865).
 
-Moonlight is the work of students at [Case Western](http://case.edu) and was
-started as a project at [MHacks](http://mhacks.org).
+## License
+
+GPL v3, as Moonlight: [LICENSE.txt](LICENSE.txt).

@@ -31,15 +31,16 @@ Select, LB and RB together, as in Moonlight.
 
 ## Releases
 
-`VERSION` is the app's version. A push to main that changes it makes the
+`VERSION` is the app's version. A push to master that changes it makes the
 release `v<VERSION>` with the signed `com.lootnest.tv_<VERSION>.apk` and its
 SHA-256 (`.github/workflows/release.yml`); Lootnest pins that address and
 checksum in `core.AndroidAppPinned` once the release has been tried.
 
-Releases are signed with one key, kept as four repository secrets:
-`LOOTNEST_KEYSTORE_B64` (the keystore file, base64), `LOOTNEST_KEYSTORE_PASSWORD`,
-`LOOTNEST_KEY_ALIAS` and `LOOTNEST_KEY_PASSWORD`. Keep a copy of the
-keystore somewhere safe: a TV only takes an update signed with the same key.
+Releases are signed with one key, kept as two repository secrets:
+`LOOTNEST_KEYSTORE_B64` (the keystore file, base64; the key's alias is
+`lootnest`) and `LOOTNEST_KEYSTORE_PASSWORD` (the keystore's and the key's).
+Keep a copy of the keystore somewhere safe: a TV only takes an update
+signed with the same key.
 
 To build here: `./gradlew assembleNonRootDebug` (Android SDK with platform
 37 and NDK 29.0.14206865).

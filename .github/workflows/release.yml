@@ -1,17 +1,17 @@
 name: Release
 run-name: "Release"
 
-# A push to main whose VERSION has no release yet makes that release (tag
+# A push to master whose VERSION has no release yet makes that release (tag
 # v<VERSION> on that commit) with the signed .apk and its SHA-256, which
 # Lootnest on the PC pins (core.AndroidAppPinned).
 #
-# Signing needs four repository secrets, made once (see the README):
-# LOOTNEST_KEYSTORE_B64 (the keystore, base64), LOOTNEST_KEYSTORE_PASSWORD,
-# LOOTNEST_KEY_ALIAS and LOOTNEST_KEY_PASSWORD. The same key has to sign
-# every release, or TVs refuse the update.
+# Signing needs two repository secrets, made once (see the README):
+# LOOTNEST_KEYSTORE_B64 (the keystore, base64; its key's alias is
+# "lootnest") and LOOTNEST_KEYSTORE_PASSWORD (the keystore's and the key's).
+# The same key has to sign every release, or TVs refuse the update.
 on:
   push:
-    branches: [ main ]
+    branches: [ master ]
     paths: [ VERSION ]
 
 permissions:
@@ -53,8 +53,6 @@ jobs:
         if: steps.ver.outputs.skip != 'true'
         env:
           LOOTNEST_KEYSTORE_PASSWORD: ${{ secrets.LOOTNEST_KEYSTORE_PASSWORD }}
-          LOOTNEST_KEY_ALIAS: ${{ secrets.LOOTNEST_KEY_ALIAS }}
-          LOOTNEST_KEY_PASSWORD: ${{ secrets.LOOTNEST_KEY_PASSWORD }}
         run: |
           ./gradlew --no-daemon assembleNonRootRelease
           mkdir -p dist

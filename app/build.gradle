@@ -93,8 +93,8 @@ android {
             if (ks != null && new File(ks).exists()) {
                 storeFile file(ks)
                 storePassword System.getenv("LOOTNEST_KEYSTORE_PASSWORD")
-                keyAlias System.getenv("LOOTNEST_KEY_ALIAS")
-                keyPassword System.getenv("LOOTNEST_KEY_PASSWORD")
+                keyAlias System.getenv("LOOTNEST_KEY_ALIAS") ?: "lootnest"
+                keyPassword System.getenv("LOOTNEST_KEY_PASSWORD") ?: System.getenv("LOOTNEST_KEYSTORE_PASSWORD")
             }
         }
     }
